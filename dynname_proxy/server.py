@@ -14,7 +14,7 @@ def configure_proxy():
         return f'You need to access the site by IP address: {host}', 400
     config = load_config(app.config['config_path'])
     api = DynnameAPI(config)
-    proxy_id, proxy_config_url = api.update_proxy(proxy_ip)
+    proxy_id, proxy_config_url = api.update_proxy(proxy_ip=proxy_ip)
     config['proxy_id'] = proxy_id
     save_config(app.config['config_path'], config)
     return redirect(proxy_config_url)

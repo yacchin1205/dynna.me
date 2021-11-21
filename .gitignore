@@ -1,4 +1,7 @@
+.letsencrypt
+
 .python-version
+*.egg-info/
 **/__pycache__/
 
 .dynname.json

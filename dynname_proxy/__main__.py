@@ -16,7 +16,7 @@ def modify_config(config_path, name=None):
     c['name'] = name
     save_config(config_path, c)
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+parser = argparse.ArgumentParser(description='Server for dynna.me')
 parser.add_argument('-H', '--host', type=str, default='0.0.0.0',
                     help='Listen host')
 parser.add_argument('-p', '--port', type=int, default=5000,
