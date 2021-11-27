@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+python3 -m dynname_proxy.cmdtool --update --acme-validation ${CERTBOT_VALIDATION} -c ${CONFIG_PATH}
+sleep 10

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -xe
+if [ -f $CONFIG_PATH ]; then
+  /opt/dynname/bin/reload-config boot
+fi
+
+/usr/bin/supervisord

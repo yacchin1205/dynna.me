@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+export HOSTNAME=$(hostname)
+export PROXY_NAME=${DYNNAME_PROXY_NAME:-$HOSTNAME}
+
+python -m dynname_proxy \
+    -H 0.0.0.0 \
+    -d -v -c /opt/dynname/data/.dynname.json \
+    -p 8080 \
+    --name ${PROXY_NAME}

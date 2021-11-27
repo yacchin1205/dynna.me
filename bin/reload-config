@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -xe
+
+if [ "$1" = "boot" ]; then
+  BOOTSTRAP=1
+fi
+
+refresh_nginx () {
+  j2 /opt/dynname/conf/nginx.conf.j2 > /tmp/nginx.conf
+  diff -u /tmp/nginx.conf /etc/nginx/nginx.conf && CHANGES=0 || CHANGES=1
+  if [ "${CHANGES}" = "1" ]; then
+    cp /tmp/nginx.conf /etc/nginx/nginx.conf
+
+    if [ -z "${BOOTSTRAP}" ]; then
+      supervisorctl restart nginx
+    fi
+  fi
+}
+
+export CERT_DOMAIN=$(python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH | jq .fqdn -r)
+export CERT_DIR=/etc/letsencrypt/live/${CERT_DOMAIN%.}
+ls -la ${CERT_DIR} && CERT_EXISTS=1 || CERT_EXISTS=
+export CERT_EXISTS
+
+refresh_nginx
+
+if [ -z "${CERT_DOMAIN}" ]; then
+    exit 0
+fi
+
+if [ "${CERT_DOMAIN}" = "null" ]; then
+    exit 0
+fi
+
+certbot certonly --manual-auth-hook /opt/dynname/bin/register-acme-validation \
+    -d ${CERT_DOMAIN} \
+    --manual \
+    --agree-tos \
+    --email dynna.me.adm@gmail.com \
+    -n \
+    --preferred-challenges dns \
+    ${CERTBOT_FLAGS:-}
+
+refresh_nginx

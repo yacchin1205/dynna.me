@@ -3,6 +3,9 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+def _requires_from_file(filename):
+    return open(filename).read().splitlines()
+
 setuptools.setup(
     name="dynname-proxy",
     version="0.1.0",
@@ -20,6 +23,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=_requires_from_file('requirements.txt'),
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
 )
