@@ -2,6 +2,7 @@ services:
   sample-app:
     # example: ifconfig.co https://github.com/mpolden/echoip
     image: mpolden/echoip:latest
+    command: -H X-Real-IP
   dynname-proxy:
     build: .
     ports:
