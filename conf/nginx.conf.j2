@@ -16,35 +16,52 @@ http {
   access_log  /dev/stdout  main;
   error_log   /dev/stderr  warn;
 
-  server { # HTTP
-    listen       80;
-    {% if env("CERT_DOMAIN") %}
-    server_name  {{ env("CERT_DOMAIN") }};
-    {% endif %}
+  {% if fqdns is defined %}
+    {% for fqdn in fqdns %}
+      server { # HTTP
+        listen       80;
+        server_name  {{ fqdn[:-1] }};
 
-    location ~ ^/\.dynname/ {
-      proxy_pass      http://localhost:8080;
+        location ~ ^/\.dynname/ {
+          proxy_pass      http://localhost:8080;
+        }
+
+        location / {
+          proxy_pass      http://{{ env("UPSTREAM_HTTP_HOST") }}:{{ env("UPSTREAM_HTTP_PORT") }};
+        }
+      }
+    {% endfor %}
+  {% endif %}
+  {% if fqdns is not defined or fqdns|length == 0 %}
+    server { # HTTP
+      listen       80;
+
+      location ~ ^/\.dynname/ {
+        proxy_pass      http://localhost:8080;
+      }
+
+      location / {
+        proxy_pass      http://{{ env("UPSTREAM_HTTP_HOST") }}:{{ env("UPSTREAM_HTTP_PORT") }};
+      }
     }
+  {% endif %}
 
-    location / {
-      proxy_pass      http://{{ env("UPSTREAM_HTTP_HOST") }}:{{ env("UPSTREAM_HTTP_PORT") }};
-    }
-  }
+  {% if fqdns is defined %}
+    {% for fqdn in fqdns %}
+      {% if cert_dirs[loop.index0] %}
+        server { # HTTPS
+          listen       443;
+          ssl on;
+          server_name  {{ fqdn[:-1] }};
 
-  {% if env("CERT_EXISTS") %}
-  server { # HTTPS
-    listen       443;
-    ssl on;
-    {% if env("CERT_DOMAIN") %}
-    server_name  {{ env("CERT_DOMAIN") }};
-    {% endif %}
+          ssl_certificate {{ cert_dirs[loop.index0] }}/fullchain.pem;
+          ssl_certificate_key {{ cert_dirs[loop.index0] }}/privkey.pem;
 
-    ssl_certificate {{ env("CERT_DIR") }}/fullchain.pem;
-    ssl_certificate_key {{ env("CERT_DIR") }}/privkey.pem;
-
-    location / {
-      proxy_pass      http://{{ env("UPSTREAM_HTTPS_HOST") }}:{{ env("UPSTREAM_HTTPS_PORT") }};
-    }
-  }
+          location / {
+            proxy_pass      http://{{ env("UPSTREAM_HTTPS_HOST") }}:{{ env("UPSTREAM_HTTPS_PORT") }};
+          }
+        }
+      {% endif %}
+    {% endfor %}
   {% endif %}
 }

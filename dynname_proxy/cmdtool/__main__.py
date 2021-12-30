@@ -1,9 +1,19 @@
 import argparse
 import json
 import logging
+import os
 import sys
 from ..server import DynnameAPI
 from ..config import load_config
+
+
+def _get_cert_path(cert_dir, fqdn):
+    if fqdn.endswith('.'):
+        fqdn = fqdn[:-1]
+    path = os.path.join(cert_dir, fqdn)
+    if not os.path.exists(path):
+        return None
+    return path
 
 
 logger = logging.getLogger(__name__)
@@ -18,10 +28,12 @@ parser.add_argument('--acme-validation', type=str, default=None,
                     help='ACME validation')
 parser.add_argument('-d', '--debug', action='store_true',
                     help='Debug mode')
+parser.add_argument('--cert-dir', type=str, default=None,
+                    help='Path to the certificate directory')
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='Verbose mode')
 parser.add_argument('-c', '--config', type=str, default='~/.dynname.json',
-                    help='Dynname config')
+                    help='Path of the dynname config')
 
 args = parser.parse_args(sys.argv[1:])
 
@@ -32,7 +44,9 @@ logging.basicConfig(level=log_level, format=LOG_FORMAT)
 config = load_config(args.config)
 api = DynnameAPI(config)
 if args.get:
-    proxy = api.get_proxy()
+    proxy = api.get_proxy() if 'proxy_id' in config else {}
+    if args.cert_dir and 'fqdns' in proxy:
+        proxy['cert_dirs'] = [_get_cert_path(args.cert_dir, fqdn) for fqdn in proxy['fqdns']]
     print(json.dumps(proxy))
 elif args.update:
     assert args.acme_validation is not None

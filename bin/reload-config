@@ -7,10 +7,8 @@ if [ "$1" = "boot" ]; then
 fi
 
 refresh_nginx () {
-  export CERT_DIR=/etc/letsencrypt/live/${CERT_DOMAIN%.}
-  ls -la ${CERT_DIR} 2>/dev/null && CERT_EXISTS=1 || CERT_EXISTS=
-  export CERT_EXISTS
-  j2 /opt/dynname/conf/nginx.conf.j2 > /tmp/nginx.conf
+  python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH --cert-dir /etc/letsencrypt/live/ | \
+    j2 --format=json /opt/dynname/conf/nginx.conf.j2 > /tmp/nginx.conf
   diff -q /tmp/nginx.conf /etc/nginx/nginx.conf && CHANGES=0 || CHANGES=1
   if [ "${CHANGES}" = "1" ]; then
     cp /tmp/nginx.conf /etc/nginx/nginx.conf
@@ -40,22 +38,18 @@ show_config_message () {
   echo
 }
 
-export CERT_DOMAIN=$(python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH | jq .fqdn -r)
+export CERT_DOMAINS=$(python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH | jq -r '.fqdns|.[]?')
 
 refresh_nginx
 
-if [ -z "${CERT_DOMAIN}" ]; then
+if [ -z "${CERT_DOMAINS}" ]; then
     show_config_message
     exit 0
 fi
 
-if [ "${CERT_DOMAIN}" = "null" ]; then
-    show_config_message
-    exit 0
-fi
-
-certbot certonly --manual-auth-hook /opt/dynname/bin/register-acme-validation \
-    -d ${CERT_DOMAIN} \
+echo "${CERT_DOMAINS}" | xargs -I{} -n 1 \
+    certbot certonly --manual-auth-hook /opt/dynname/bin/register-acme-validation \
+    -d {} \
     --manual \
     --agree-tos \
     --email dynna.me.adm@gmail.com \
