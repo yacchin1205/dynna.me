@@ -1,18 +1,20 @@
 services:
   sample-app:
-    # example: ifconfig.co https://github.com/mpolden/echoip
-    image: mpolden/echoip:latest
-    command: -H X-Real-IP
+    # example: etherpad https://github.com/ether/etherpad-lite
+    # The Etherpad service listens on port 9001.
+    image: etherpad/etherpad
   dynname-proxy:
     build: .
     ports:
       - 443:443
       - 80:80
     environment:
+      # Etherpad Container Name(sample-app):Etherpad Port(9001)
       - UPSTREAM_HTTP_HOST=sample-app
-      - UPSTREAM_HTTP_PORT=8080
+      - UPSTREAM_HTTP_PORT=9001
       - UPSTREAM_HTTPS_HOST=sample-app
-      - UPSTREAM_HTTPS_PORT=8080
+      - UPSTREAM_HTTPS_PORT=9001
+    hostname: my-etherpad-service
     links:
       - sample-app
     volumes:
