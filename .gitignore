@@ -5,3 +5,4 @@
 **/__pycache__/
 
 .dynname.json
+docker-compose.override.yml

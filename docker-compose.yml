@@ -4,7 +4,7 @@ services:
     # The Etherpad service listens on port 9001.
     image: etherpad/etherpad
   dynname-proxy:
-    build: .
+    image: yacchin1205/dynna.me:latest
     ports:
       - 443:443
       - 80:80

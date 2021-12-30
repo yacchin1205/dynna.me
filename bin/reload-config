@@ -1,35 +1,56 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 if [ "$1" = "boot" ]; then
   BOOTSTRAP=1
 fi
 
 refresh_nginx () {
+  export CERT_DIR=/etc/letsencrypt/live/${CERT_DOMAIN%.}
+  ls -la ${CERT_DIR} 2>/dev/null && CERT_EXISTS=1 || CERT_EXISTS=
+  export CERT_EXISTS
   j2 /opt/dynname/conf/nginx.conf.j2 > /tmp/nginx.conf
-  diff -u /tmp/nginx.conf /etc/nginx/nginx.conf && CHANGES=0 || CHANGES=1
+  diff -q /tmp/nginx.conf /etc/nginx/nginx.conf && CHANGES=0 || CHANGES=1
   if [ "${CHANGES}" = "1" ]; then
     cp /tmp/nginx.conf /etc/nginx/nginx.conf
 
     if [ -z "${BOOTSTRAP}" ]; then
       supervisorctl restart nginx
+      if [ "${CERT_EXISTS}" = "1" ]; then
+        echo
+        echo "======= dynname-proxy configured successfully ======="
+        echo
+        echo "The certificate has been configured: https://${CERT_DOMAIN%.}"
+        echo
+        echo "=================================================="
+        echo
+      fi
     fi
   fi
 }
 
+show_config_message () {
+  echo
+  echo "======= dynname-proxy started successfully ======="
+  echo
+  echo "Please open http://(YOUR_DEVICE_IP_ADDRESS)/.dynname/config in your browser and activate the proxy at dynna.me."
+  echo
+  echo "=================================================="
+  echo
+}
+
 export CERT_DOMAIN=$(python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH | jq .fqdn -r)
-export CERT_DIR=/etc/letsencrypt/live/${CERT_DOMAIN%.}
-ls -la ${CERT_DIR} && CERT_EXISTS=1 || CERT_EXISTS=
-export CERT_EXISTS
 
 refresh_nginx
 
 if [ -z "${CERT_DOMAIN}" ]; then
+    show_config_message
     exit 0
 fi
 
 if [ "${CERT_DOMAIN}" = "null" ]; then
+    show_config_message
     exit 0
 fi
 
