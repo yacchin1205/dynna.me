@@ -38,6 +38,7 @@ show_config_message () {
   echo
 }
 
+python -m dynname_proxy.cmdtool --update -c $CONFIG_PATH
 export CERT_DOMAINS=$(python -m dynname_proxy.cmdtool --get -c $CONFIG_PATH | jq -r '.fqdns|.[]?')
 
 refresh_nginx

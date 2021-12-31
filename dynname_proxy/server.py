@@ -2,9 +2,21 @@ import logging
 from flask import Flask, request, redirect
 from .service import get_proxy_ip, DynnameAPI
 from .config import load_config, save_config
+from .net import get_ips
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
+
+
+def _find_proxy_nic(proxy_ip):
+    ips = get_ips()
+    if ips is None:
+        return None
+    for k, v in ips.items():
+        if v == proxy_ip:
+            return k
+    return None
+
 
 @app.route("/.dynname/config")
 def configure_proxy():
@@ -16,5 +28,8 @@ def configure_proxy():
     api = DynnameAPI(config)
     proxy_id, proxy_config_url = api.update_proxy(proxy_ip=proxy_ip)
     config['proxy_id'] = proxy_id
+    config['proxy_nic'] = _find_proxy_nic(proxy_ip)
+    if config['proxy_nic'] is None:
+        logger.info(f'No NICs: {proxy_ip}')
     save_config(app.config['config_path'], config)
     return redirect(proxy_config_url)

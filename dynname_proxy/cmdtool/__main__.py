@@ -5,6 +5,7 @@ import os
 import sys
 from ..server import DynnameAPI
 from ..config import load_config
+from ..net import get_ips
 
 
 def _get_cert_path(cert_dir, fqdn):
@@ -49,8 +50,18 @@ if args.get:
         proxy['cert_dirs'] = [_get_cert_path(args.cert_dir, fqdn) for fqdn in proxy['fqdns']]
     print(json.dumps(proxy))
 elif args.update:
-    assert args.acme_validation is not None
-    api.update_proxy(acme_validation=args.acme_validation)
+    proxy_ip = None
+    if 'proxy_nic' in config and config['proxy_nic'] is not None:
+        ips = get_ips()
+        proxy_nic = config['proxy_nic']
+        if proxy_nic in ips:
+            proxy_ip = ips[proxy_nic]
+        else:
+            logger.warn(f'No nic: {proxy_nic}')
+    if args.acme_validation is None and proxy_ip is None:
+        logger.info('No properties to update')
+        sys.exit(0)
+    api.update_proxy(acme_validation=args.acme_validation, proxy_ip=proxy_ip)
 else:
     print('Action not defined', file=sys.stderr)
     parser.print_help()

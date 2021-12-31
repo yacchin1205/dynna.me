@@ -4,6 +4,9 @@ RUN apk add --no-cache nginx supervisor bash jq
 
 COPY . /tmp/dynname-proxy
 RUN pip3 install --no-cache /tmp/dynname-proxy j2cli
+RUN apk add --no-cache gcc musl-dev linux-headers && \
+    pip3 install --no-cache psutil && \
+    apk del gcc musl-dev linux-headers
 
 RUN mkdir -p /opt/dynname/data && \
     mkdir -p /opt/dynname/conf && \
