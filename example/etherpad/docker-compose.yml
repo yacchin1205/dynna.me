@@ -1,0 +1,27 @@
+services:
+  sample-app:
+    # example: etherpad https://github.com/ether/etherpad-lite
+    # The Etherpad service listens on port 9001.
+    image: etherpad/etherpad
+  dynname-proxy:
+    image: yacchin1205/dynna.me:latest
+    ports:
+      - 443:443
+      - 80:80
+    environment:
+      # Etherpad Container Name(sample-app):Etherpad Port(9001)
+      - UPSTREAM_HTTP_HOST=sample-app
+      - UPSTREAM_HTTP_PORT=9001
+      - UPSTREAM_HTTPS_HOST=sample-app
+      - UPSTREAM_HTTPS_PORT=9001
+    hostname: my-etherpad-service
+    links:
+      - sample-app
+    volumes:
+      - "dynname:/opt/dynname/data"
+      - "etc-letsencrypt:/etc/letsencrypt"
+      - "var-lib-letsencrypt:/var/lib/letsencrypt"
+volumes:
+  etc-letsencrypt: {}
+  var-lib-letsencrypt: {}
+  dynname: {}
