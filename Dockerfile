@@ -1,4 +1,7 @@
-FROM certbot/certbot:latest
+FROM certbot/certbot:latest AS base-amd64
+FROM certbot/certbot:arm32v6-latest AS base-arm
+
+FROM base-${TARGETARCH}
 
 RUN apk add --no-cache nginx supervisor bash jq
 
