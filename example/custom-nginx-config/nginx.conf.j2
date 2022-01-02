@@ -1,0 +1,63 @@
+worker_processes  5;
+
+events {
+  worker_connections  4096;
+}
+
+http {
+  include    /etc/nginx/mime.types;
+  include    /etc/nginx/proxy.conf;
+
+  default_type application/octet-stream;
+  log_format   main '$remote_addr - $remote_user [$time_local]  $status '
+    '"$request" $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for"';
+
+  access_log  /dev/stdout  main;
+  error_log   /dev/stderr  warn;
+
+  {% if fqdns is defined %}
+    {% for fqdn in fqdns %}
+      server { # HTTP
+        listen       80;
+        server_name  {{ fqdn[:-1] }};
+
+        location ~ ^/\.dynname/ {
+          proxy_pass      http://localhost:5000;
+        }
+      }
+    {% endfor %}
+  {% endif %}
+  {% if fqdns is not defined or fqdns|length == 0 %}
+    server { # HTTP
+      listen       80;
+
+      location ~ ^/\.dynname/ {
+        proxy_pass      http://localhost:5000;
+      }
+    }
+  {% endif %}
+
+  {% if fqdns is defined %}
+    {% for fqdn in fqdns %}
+      {% if cert_dirs[loop.index0] %}
+        server { # HTTPS
+          listen       443;
+          ssl on;
+          server_name  {{ fqdn[:-1] }};
+
+          ssl_certificate {{ cert_dirs[loop.index0] }}/fullchain.pem;
+          ssl_certificate_key {{ cert_dirs[loop.index0] }}/privkey.pem;
+
+          location / {
+            {% if 'echoip' in fqdn %}
+            proxy_pass      http://localhost:8080;
+            {% else %}
+            proxy_pass      http://localhost:9001;
+            {% endif %}
+          }
+        }
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+}
