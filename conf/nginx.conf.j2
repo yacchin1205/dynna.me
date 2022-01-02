@@ -23,7 +23,7 @@ http {
         server_name  {{ fqdn[:-1] }};
 
         location ~ ^/\.dynname/ {
-          proxy_pass      http://localhost:8080;
+          proxy_pass      http://localhost:5000;
         }
 
         location / {
@@ -37,7 +37,7 @@ http {
       listen       80;
 
       location ~ ^/\.dynname/ {
-        proxy_pass      http://localhost:8080;
+        proxy_pass      http://localhost:5000;
       }
 
       location / {

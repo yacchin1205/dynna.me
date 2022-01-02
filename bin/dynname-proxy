@@ -7,5 +7,5 @@ export PROXY_NAME=${DYNNAME_PROXY_NAME:-$HOSTNAME}
 python -m dynname_proxy \
     -H 0.0.0.0 \
     -d -v -c /opt/dynname/data/.dynname.json \
-    -p 8080 \
+    -p 5000 \
     --name ${PROXY_NAME}

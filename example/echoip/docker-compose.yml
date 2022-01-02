@@ -1,19 +1,21 @@
 services:
   sample-app:
-    # example: etherpad https://github.com/ether/etherpad-lite
-    # The Etherpad service listens on port 9001.
-    # If you want to run it on ARM, specify yacchin1205/etherpad:develop
-    image: etherpad/etherpad
+    # example: echoip https://github.com/mpolden/echoip
+    # The echoip service listens on port 8080.
+    image: mpolden/echoip
     ports:
-      - 9001:9001
+      - 8080:8080
+    command:
+      - -H
+      - X-Real-IP
   dynname-proxy:
     image: yacchin1205/dynna.me:latest
     environment:
-      # Etherpad Container Name(sample-app):Etherpad Port(9001)
+      # Etherpad Container Name(sample-app):echoip Port(8081)
       - UPSTREAM_HTTP_HOST=localhost
-      - UPSTREAM_HTTP_PORT=9001
+      - UPSTREAM_HTTP_PORT=8080
       - UPSTREAM_HTTPS_HOST=localhost
-      - UPSTREAM_HTTPS_PORT=9001
+      - UPSTREAM_HTTPS_PORT=8080
     volumes:
       - "dynname:/opt/dynname/data"
       - "etc-letsencrypt:/etc/letsencrypt"
